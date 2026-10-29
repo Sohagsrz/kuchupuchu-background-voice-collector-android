@@ -7,6 +7,7 @@
         volume: 1.0,
         playbackRate: 1.0,
         searchQuery: '',
+        isSeeking: false,
         
         init() {
             this.$watch('volume', val => {
@@ -23,11 +24,16 @@
                 return;
             }
             this.currentTrack = track;
+            this.currentTime = 0;
+            this.duration = track.duration_seconds || 60;
+
             this.$nextTick(() => {
                 const player = this.$refs.audioPlayer;
                 if (player) {
                     player.src = track.url;
-                    player.play();
+                    player.currentTime = 0;
+                    player.playbackRate = parseFloat(this.playbackRate);
+                    player.play().catch(e => console.log('Autoplay prevented:', e));
                     this.isPlaying = true;
                 }
             });
@@ -40,23 +46,46 @@
                 player.pause();
                 this.isPlaying = false;
             } else {
-                player.play();
+                player.play().catch(e => console.log('Playback error:', e));
                 this.isPlaying = true;
             }
         },
 
-        seek(e) {
+        onTimeUpdate() {
             const player = this.$refs.audioPlayer;
-            if (!player || !this.duration) return;
-            const rect = e.currentTarget.getBoundingClientRect();
-            const clickPos = (e.clientX - rect.left) / rect.width;
-            player.currentTime = clickPos * this.duration;
+            if (!player || this.isSeeking) return;
+            this.currentTime = player.currentTime;
+        },
+
+        onMetadataLoaded() {
+            const player = this.$refs.audioPlayer;
+            if (!player) return;
+            if (isFinite(player.duration) && player.duration > 0) {
+                this.duration = player.duration;
+            }
+        },
+
+        onSeekInput(e) {
+            this.isSeeking = true;
+            this.currentTime = parseFloat(e.target.value);
+        },
+
+        onSeekChange(e) {
+            const player = this.$refs.audioPlayer;
+            const targetTime = parseFloat(e.target.value);
+            if (player) {
+                player.currentTime = targetTime;
+            }
+            this.currentTime = targetTime;
+            this.isSeeking = false;
         },
 
         skip(seconds) {
             const player = this.$refs.audioPlayer;
             if (!player) return;
-            player.currentTime = Math.max(0, Math.min(this.duration, player.currentTime + seconds));
+            const target = Math.max(0, Math.min(this.duration || 60, player.currentTime + seconds));
+            player.currentTime = target;
+            this.currentTime = target;
         },
 
         formatTime(seconds) {
@@ -115,8 +144,8 @@
             <!-- Hidden Audio Element -->
             <audio 
                 x-ref="audioPlayer"
-                @timeupdate="currentTime = $el.currentTime"
-                @loadedmetadata="duration = $el.duration"
+                @timeupdate="onTimeUpdate()"
+                @loadedmetadata="onMetadataLoaded()"
                 @ended="isPlaying = false"
                 @play="isPlaying = true"
                 @pause="isPlaying = false">
@@ -170,8 +199,18 @@
                     <!-- Progress Bar & Timestamps -->
                     <div class="w-full flex items-center space-x-3 text-xs text-gray-400">
                         <span class="w-10 text-right font-mono" x-text="formatTime(currentTime)"></span>
-                        <div class="relative w-full h-2 bg-gray-700 hover:bg-gray-600 rounded-full cursor-pointer overflow-hidden" @click="seek($event)">
-                            <div class="h-full bg-amber-500 rounded-full transition-all duration-75" :style="`width: ${(currentTime / (duration || 1)) * 100}%`"></div>
+                        <div class="relative w-full flex items-center">
+                            <input 
+                                type="range" 
+                                class="w-full h-2 bg-gray-700 accent-amber-500 rounded-lg cursor-pointer"
+                                min="0" 
+                                :max="duration > 0 ? duration : 60" 
+                                step="0.1"
+                                :value="currentTime"
+                                @input="onSeekInput($event)"
+                                @change="onSeekChange($event)"
+                                @touchstart="isSeeking = true"
+                                @touchend="isSeeking = false">
                         </div>
                         <span class="w-10 font-mono" x-text="formatTime(duration)"></span>
                     </div>
@@ -220,6 +259,7 @@
                     @php
                         $audioUrl = $recording->audio_url;
                         $startedAt = $recording->started_at ? $recording->started_at->format('M d, Y • H:i:s T') : 'Unknown';
+                        $agoTime = $recording->started_at ? $recording->started_at->diffForHumans() : 'Recently';
                     @endphp
 
                     <div 
@@ -236,6 +276,7 @@
                                     id: {{ $recording->id }},
                                     title: '{{ $recording->filename }}',
                                     details: 'Duration: {{ $recording->formatted_duration }} • {{ $recording->formatted_size }}',
+                                    duration_seconds: {{ (int) $recording->duration_seconds }},
                                     url: '{{ $audioUrl }}'
                                 })"
                                 class="w-11 h-11 rounded-full flex items-center justify-center shrink-0 shadow-sm transition"
@@ -264,6 +305,7 @@
                                 <div class="flex flex-wrap items-center text-xs text-gray-500 dark:text-gray-400 gap-x-4 gap-y-1 mt-1 font-mono">
                                     <span>⏱ {{ $recording->formatted_duration }}</span>
                                     <span>💾 {{ $recording->formatted_size }}</span>
+                                    <span class="text-amber-600 dark:text-amber-400 font-semibold">🕒 {{ $agoTime }}</span>
                                     <span>📅 {{ $startedAt }}</span>
                                     <span class="truncate max-w-xs text-gray-400" title="{{ $recording->segment_id }}">ID: {{ substr($recording->segment_id, 0, 8) }}…</span>
                                 </div>
