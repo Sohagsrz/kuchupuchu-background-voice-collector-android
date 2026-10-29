@@ -1,9 +1,51 @@
 @import 'tailwindcss';
 
+@source '../views/**/*.blade.php';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Plus Jakarta Sans', 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    --color-brand-50: #fffbeb;
+    --color-brand-100: #fef3c7;
+    --color-brand-400: #fbbf24;
+    --color-brand-500: #f59e0b;
+    --color-brand-600: #d97706;
+}
+
+@layer utilities {
+    /* Mobile Touch-Friendly Custom Range Slider */
+    input[type="range"].touch-slider {
+        -webkit-appearance: none;
+        appearance: none;
+        background: #1e293b;
+        border-radius: 9999px;
+        outline: none;
+    }
+    input[type="range"].touch-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #f59e0b;
+        cursor: pointer;
+        box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+        transition: transform 0.1s ease;
+    }
+    input[type="range"].touch-slider::-webkit-slider-thumb:hover,
+    input[type="range"].touch-slider::-webkit-slider-thumb:active {
+        transform: scale(1.25);
+        background: #fbbf24;
+    }
+    input[type="range"].touch-slider::-moz-range-thumb {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #f59e0b;
+        cursor: pointer;
+        border: none;
+        box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+    }
 }

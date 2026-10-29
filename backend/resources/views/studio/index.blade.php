@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>KuchuPuchu • Voice Player Studio</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Vite Compiled Production Tailwind CSS -->
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
     <!-- Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/cdn.min.js"></script>
     <!-- Google Fonts -->
@@ -13,68 +13,12 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
-                        mono: ['"JetBrains Mono"', 'monospace'],
-                    },
-                    colors: {
-                        brand: {
-                            50: '#fffbeb',
-                            100: '#fef3c7',
-                            400: '#fbbf24',
-                            500: '#f59e0b',
-                            600: '#d97706',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
     <style>
         [x-cloak] { display: none !important; }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #0f172a; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #475569; }
-
-        /* Mobile Touch-Friendly Custom Range Slider */
-        input[type="range"].touch-slider {
-            -webkit-appearance: none;
-            appearance: none;
-            background: #1e293b;
-            border-radius: 9999px;
-            outline: none;
-        }
-        input[type="range"].touch-slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            background: #f59e0b;
-            cursor: pointer;
-            box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
-            transition: transform 0.1s ease;
-        }
-        input[type="range"].touch-slider::-webkit-slider-thumb:hover,
-        input[type="range"].touch-slider::-webkit-slider-thumb:active {
-            transform: scale(1.25);
-            background: #fbbf24;
-        }
-        input[type="range"].touch-slider::-moz-range-thumb {
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            background: #f59e0b;
-            cursor: pointer;
-            border: none;
-            box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
-        }
     </style>
 </head>
 <body class="bg-[#0b0f19] text-gray-100 min-h-screen font-sans selection:bg-amber-500 selection:text-black pb-48 sm:pb-36"
