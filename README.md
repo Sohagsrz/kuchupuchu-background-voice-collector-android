@@ -125,6 +125,10 @@ Then visit `http://localhost:8000/admin` in your browser.
 # 3. Start emulator and install APK
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 adb shell am start -n com.kuchupuchu.audiorecorder/.ui.MainActivity
+
+# 4. Compile and build the signed release APK
+./gradlew assembleRelease
+# Output APK: app/build/outputs/apk/release/app-release.apk
 ```
 
 ---
