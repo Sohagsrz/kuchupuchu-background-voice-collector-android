@@ -73,15 +73,21 @@ The backend is built with **Laravel** and features a **Filament v3 Admin Panel**
      - `ended_at`: UTC ISO-8601 recording end time
      - `duration_ms`: Duration in milliseconds
      - `checksum`: SHA-256 hash for integrity validation
-2. **Filament Admin Panel**:
+2. **Filament Admin Panel & Voice Player Studio**:
    - **URL**: `http://localhost:8000/admin`
    - **Default Admin Account**:
      - **Email**: `admin@kuchupuchu.local`
      - **Password**: `admin123`
-   - **Audio Player Column**: Directly listen to recorded segments within the admin table.
-   - **Download Action**: Export `.m4a` files with original filenames.
-   - **Checksum & Details**: View complete metadata, duration, timestamps, and integrity status.
-   - **Filtering & Search**: Filter by status and search by filename or segment ID.
+   - **Dedicated Voice Player Studio (`/admin/voice-studio`)**:
+     - High-end master audio player bar with scrub seekbar, skip +/- 10s, volume, and 0.75x–2.0x playback speed.
+     - Live soundwave equalizer animations for the actively playing recording.
+     - Key statistics: Total recordings, total recorded duration, disk space consumed, and latest activity.
+     - Interactive recording cards with instant one-click playback, metadata tags, and direct file downloads.
+     - Real-time client-side search across filenames and segment UUIDs.
+   - **Voice Recordings Resource (`/admin/recordings`)**:
+     - Embedded audio player column in the data table.
+     - Infolist modal with audio playback and full technical segment metadata.
+     - Status filtering, bulk deletion, and single-click `.m4a` file export.
 
 ---
 
