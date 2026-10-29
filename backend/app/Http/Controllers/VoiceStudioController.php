@@ -18,7 +18,40 @@ class VoiceStudioController extends Controller
             });
         }
 
-        $recordings = $query->get();
+        $perPage = (int) $request->input('per_page', 12);
+        if ($perPage <= 0 || $perPage > 50) {
+            $perPage = 12;
+        }
+
+        $paginator = $query->paginate($perPage);
+
+        $transformRecording = function (Recording $recording) {
+            return [
+                'id' => $recording->id,
+                'filename' => $recording->filename,
+                'segment_id' => $recording->segment_id,
+                'duration_text' => $recording->formatted_duration,
+                'duration_seconds' => (int) ($recording->duration_ms / 1000),
+                'size' => $recording->formatted_size,
+                'ago_time' => $recording->started_at ? $recording->started_at->diffForHumans() : 'Recently',
+                'exact_time' => $recording->started_at ? $recording->started_at->format('M d, Y • H:i:s T') : 'Unknown',
+                'url' => $recording->audio_url,
+                'status' => $recording->status,
+            ];
+        };
+
+        $items = collect($paginator->items())->map($transformRecording)->values();
+
+        if ($request->wantsJson() || $request->ajax() || $request->input('format') === 'json') {
+            return response()->json([
+                'data' => $items,
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+                'has_more' => $paginator->hasMorePages(),
+                'total' => $paginator->total(),
+                'per_page' => $paginator->perPage(),
+            ]);
+        }
 
         $totalRecordings = Recording::count();
         $totalBytes = Recording::sum('size_bytes');
@@ -45,6 +78,15 @@ class VoiceStudioController extends Controller
             'latestTime' => $latest ? $latest->started_at?->diffForHumans() : 'No recordings yet',
         ];
 
-        return view('studio.index', compact('recordings', 'stats', 'search'));
+        $initialPagination = [
+            'data' => $items,
+            'current_page' => $paginator->currentPage(),
+            'last_page' => $paginator->lastPage(),
+            'has_more' => $paginator->hasMorePages(),
+            'total' => $paginator->total(),
+            'per_page' => $paginator->perPage(),
+        ];
+
+        return view('studio.index', compact('stats', 'search', 'initialPagination'));
     }
 }

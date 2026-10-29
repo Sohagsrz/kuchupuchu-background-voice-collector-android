@@ -78,7 +78,7 @@
     </style>
 </head>
 <body class="bg-[#0b0f19] text-gray-100 min-h-screen font-sans selection:bg-amber-500 selection:text-black pb-48 sm:pb-36"
-      x-data="audioStudio()" x-init="init()">
+      x-data="audioStudio({{ Js::from($initialPagination) }})" x-init="init()">
 
     <!-- Top Navigation Bar -->
     <nav class="sticky top-0 z-40 backdrop-blur-xl bg-[#0b0f19]/85 border-b border-gray-800/80 px-3 sm:px-6 lg:px-8 py-3 transition-all">
@@ -185,14 +185,14 @@
             <div>
                 <h2 class="text-lg sm:text-xl font-extrabold tracking-tight text-white flex items-center space-x-2">
                     <span>Audio Recordings</span>
-                    <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-gray-800 text-amber-400 border border-gray-700">
-                        {{ count($recordings) }}
+                    <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-gray-800 text-amber-400 border border-gray-700" x-text="totalCount">
+                        {{ $initialPagination['total'] }}
                     </span>
                 </h2>
-                <p class="text-xs text-gray-400 mt-0.5">Tap any recording to listen with instant seeking & download</p>
+                <p class="text-xs text-gray-400 mt-0.5">Continuous auto-loading voice segments with instant seeking & download</p>
             </div>
 
-            <!-- Search Bar -->
+            <!-- Search Bar with Live Debounce -->
             <div class="w-full sm:w-80 relative">
                 <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-500">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -202,58 +202,39 @@
                 <input 
                     type="text" 
                     x-model="searchQuery" 
+                    @input="onSearchInput()"
                     placeholder="Search recordings or segment ID..." 
                     class="w-full pl-9 pr-4 py-2.5 text-xs bg-gray-900/90 border border-gray-800 rounded-xl focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 focus:outline-none text-gray-200 placeholder-gray-500 transition shadow-inner">
             </div>
         </div>
 
-        <!-- Recordings Cards Grid -->
+        <!-- Recordings Cards Grid (Infinity Scroll) -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-            @forelse($recordings as $recording)
-                @php
-                    $audioUrl = $recording->audio_url;
-                    $agoTime = $recording->started_at ? $recording->started_at->diffForHumans() : 'Recently';
-                    $exactTime = $recording->started_at ? $recording->started_at->format('M d, Y • H:i:s T') : 'Unknown';
-                    $durationSec = (int) ($recording->duration_ms / 1000);
-                @endphp
-
+            <template x-for="recording in recordingsList" :key="recording.id">
                 <div 
-                    x-show="!searchQuery || '{{ strtolower($recording->filename . ' ' . $recording->segment_id) }}'.includes(searchQuery.toLowerCase())"
                     class="backdrop-blur-md bg-gray-900/70 border rounded-2xl p-4 sm:p-5 shadow-sm transition-all duration-200 group hover:shadow-md cursor-pointer"
-                    :class="currentTrack && currentTrack.id === {{ $recording->id }} 
+                    :class="currentTrack && currentTrack.id === recording.id 
                         ? 'border-amber-500/80 bg-amber-500/10 ring-1 ring-amber-500/30' 
                         : 'border-gray-800/80 hover:border-gray-700/80'"
-                    @click="playTrack({
-                        id: {{ $recording->id }},
-                        filename: '{{ $recording->filename }}',
-                        segment_id: '{{ $recording->segment_id }}',
-                        duration_text: '{{ $recording->formatted_duration }}',
-                        duration_seconds: {{ $durationSec }},
-                        size: '{{ $recording->formatted_size }}',
-                        ago_time: '{{ $agoTime }}',
-                        exact_time: '{{ $exactTime }}',
-                        url: '{{ $audioUrl }}'
-                    })">
+                    @click="playTrack(recording)">
                     
                     <div class="flex items-start justify-between gap-3">
                         <!-- Play / Pause Icon Button -->
                         <div 
                             class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shrink-0 transition shadow-md"
-                            :class="currentTrack && currentTrack.id === {{ $recording->id }} && isPlaying 
+                            :class="currentTrack && currentTrack.id === recording.id && isPlaying 
                                 ? 'bg-amber-500 text-gray-950 ring-4 ring-amber-500/20' 
                                 : 'bg-gray-800/90 group-hover:bg-amber-500 group-hover:text-gray-950 text-gray-300'">
-                            <template x-if="currentTrack && currentTrack.id === {{ $recording->id }} && isPlaying">
+                            <template x-if="currentTrack && currentTrack.id === recording.id && isPlaying">
                                 <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M6.75 5.25a.75.75 0 01.75.75v12a.75.75 0 01-1.5 0v-12a.75.75 0 01.75-.75zm9 0a.75.75 0 01.75.75v12a.75.75 0 01-1.5 0v-12a.75.75 0 01.75-.75z" clip-rule="evenodd" /></svg>
                             </template>
-                            <template x-if="!(currentTrack && currentTrack.id === {{ $recording->id }} && isPlaying)">
+                            <template x-if="!(currentTrack && currentTrack.id === recording.id && isPlaying)">
                                 <svg class="w-6 h-6 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.712 1.295 2.573 0 3.285L7.28 19.991c-1.25.687-2.779-.217-2.779-1.643V5.653z" clip-rule="evenodd" /></svg>
                             </template>
                         </div>
 
                         <div class="min-w-0 flex-1">
-                            <h4 class="text-sm font-bold text-gray-100 truncate group-hover:text-amber-400 transition" title="{{ $recording->filename }}">
-                                {{ $recording->filename }}
-                            </h4>
+                            <h4 class="text-sm font-bold text-gray-100 truncate group-hover:text-amber-400 transition" :title="recording.filename" x-text="recording.filename"></h4>
                             
                             <!-- Ago Time (Prominent) -->
                             <div class="flex items-center space-x-2 mt-1">
@@ -261,19 +242,15 @@
                                     <svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                     </svg>
-                                    <span>{{ $agoTime }}</span>
+                                    <span x-text="recording.ago_time"></span>
                                 </span>
                                 
-                                <span class="text-[10px] text-gray-500 font-mono hidden sm:inline truncate">
-                                    {{ $exactTime }}
-                                </span>
+                                <span class="text-[10px] text-gray-500 font-mono hidden sm:inline truncate" x-text="recording.exact_time"></span>
                             </div>
                         </div>
 
                         <!-- Status Badge -->
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
-                            {{ $recording->status }}
-                        </span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0" x-text="recording.status"></span>
                     </div>
 
                     <!-- Bottom Info Row -->
@@ -281,18 +258,18 @@
                         <div class="flex items-center space-x-3">
                             <span class="flex items-center space-x-1 text-gray-300 font-bold">
                                 <span>⏱</span>
-                                <span>{{ $recording->formatted_duration }}</span>
+                                <span x-text="recording.duration_text"></span>
                             </span>
                             <span class="flex items-center space-x-1 text-gray-400">
                                 <span>💾</span>
-                                <span>{{ $recording->formatted_size }}</span>
+                                <span x-text="recording.size"></span>
                             </span>
                         </div>
 
                         <!-- Download Link -->
                         <a 
-                            href="{{ $audioUrl }}" 
-                            download="{{ $recording->filename }}"
+                            :href="recording.url" 
+                            :download="recording.filename"
                             @click.stop
                             class="p-1.5 rounded-lg hover:bg-gray-800 hover:text-amber-400 text-gray-400 transition"
                             title="Download audio">
@@ -302,13 +279,33 @@
                         </a>
                     </div>
                 </div>
-            @empty
-                <div class="col-span-full py-16 text-center text-gray-500">
-                    <p class="text-4xl">🎙</p>
-                    <p class="text-base font-bold text-gray-300 mt-2">No voice recordings found</p>
-                    <p class="text-xs text-gray-500 mt-1">Start recording from the KuchuPuchu Android app to stream audio segments here.</p>
+            </template>
+
+            <!-- Empty State -->
+            <div x-show="!isLoading && recordingsList.length === 0" class="col-span-full py-16 text-center text-gray-500">
+                <p class="text-4xl">🎙</p>
+                <p class="text-base font-bold text-gray-300 mt-2">No voice recordings found</p>
+                <p class="text-xs text-gray-500 mt-1">Start recording from the KuchuPuchu Android app to stream audio segments here.</p>
+            </div>
+
+            <!-- Infinity Scroll Sentinel & Loader Card -->
+            <div 
+                x-ref="sentinel" 
+                class="col-span-full py-8 text-center flex flex-col items-center justify-center space-y-3">
+                
+                <div x-show="isLoading" class="inline-flex items-center space-x-2 px-4 py-2.5 rounded-full bg-gray-900/95 border border-amber-500/40 text-xs font-semibold text-amber-400 shadow-xl backdrop-blur-md">
+                    <svg class="animate-spin -ml-0.5 mr-2 h-4 w-4 text-amber-400" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>Loading more recordings...</span>
                 </div>
-            @endforelse
+
+                <div x-show="!hasMore && recordingsList.length > 0 && !isLoading" class="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-gray-900/80 border border-gray-800 text-xs text-gray-400 font-mono">
+                    <span class="text-emerald-400">✓</span>
+                    <span>All recordings loaded (<span x-text="recordingsList.length"></span> segments)</span>
+                </div>
+            </div>
         </div>
     </main>
 
@@ -410,8 +407,16 @@
 
     <!-- Alpine.js Audio Studio Logic -->
     <script>
-        function audioStudio() {
+        function audioStudio(initialPagination) {
+            const initData = initialPagination || {};
             return {
+                recordingsList: initData.data || [],
+                currentPage: initData.current_page || 1,
+                lastPage: initData.last_page || 1,
+                hasMore: initData.has_more ?? false,
+                totalCount: initData.total ?? 0,
+                isLoading: false,
+
                 currentTrack: null,
                 isPlaying: false,
                 currentTime: 0,
@@ -420,6 +425,8 @@
                 playbackRate: 1.0,
                 searchQuery: '',
                 isSeeking: false,
+                debounceTimer: null,
+                observer: null,
 
                 init() {
                     this.$watch('volume', val => {
@@ -428,6 +435,100 @@
                     this.$watch('playbackRate', val => {
                         if (this.$refs.audioPlayer) this.$refs.audioPlayer.playbackRate = val;
                     });
+
+                    this.setupIntersectionObserver();
+                    this.setupWindowScrollListener();
+                },
+
+                setupIntersectionObserver() {
+                    if (!('IntersectionObserver' in window)) return;
+                    this.observer = new IntersectionObserver((entries) => {
+                        entries.forEach(entry => {
+                            if (entry.isIntersecting && this.hasMore && !this.isLoading) {
+                                this.loadMore();
+                            }
+                        });
+                    }, {
+                        rootMargin: '250px',
+                        threshold: 0.05
+                    });
+
+                    this.$nextTick(() => {
+                        if (this.$refs.sentinel) {
+                            this.observer.observe(this.$refs.sentinel);
+                        }
+                    });
+                },
+
+                setupWindowScrollListener() {
+                    window.addEventListener('scroll', () => {
+                        if (this.isLoading || !this.hasMore) return;
+                        const scrollBottom = window.innerHeight + window.scrollY;
+                        const docHeight = document.documentElement.offsetHeight;
+                        if (docHeight - scrollBottom < 300) {
+                            this.loadMore();
+                        }
+                    }, { passive: true });
+                },
+
+                loadMore() {
+                    if (this.isLoading || !this.hasMore) return;
+                    this.fetchPage(this.currentPage + 1, false);
+                },
+
+                async fetchPage(page, reset = false) {
+                    if (this.isLoading) return;
+                    this.isLoading = true;
+
+                    try {
+                        const params = new URLSearchParams({
+                            page: page,
+                            format: 'json'
+                        });
+                        if (this.searchQuery && this.searchQuery.trim().length > 0) {
+                            params.append('search', this.searchQuery.trim());
+                        }
+
+                        const res = await fetch(`/studio?${params.toString()}`, {
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
+
+                        if (!res.ok) {
+                            throw new Error(`HTTP error ${res.status}`);
+                        }
+
+                        const json = await res.json();
+                        const items = json.data || [];
+
+                        if (reset) {
+                            this.recordingsList = items;
+                        } else {
+                            const existingIds = new Set(this.recordingsList.map(r => r.id));
+                            const newItems = items.filter(r => !existingIds.has(r.id));
+                            this.recordingsList = [...this.recordingsList, ...newItems];
+                        }
+
+                        this.currentPage = json.current_page;
+                        this.lastPage = json.last_page;
+                        this.hasMore = json.has_more;
+                        this.totalCount = json.total;
+                    } catch (err) {
+                        console.error('Infinity scroll load error:', err);
+                    } finally {
+                        this.isLoading = false;
+                    }
+                },
+
+                onSearchInput() {
+                    clearTimeout(this.debounceTimer);
+                    this.debounceTimer = setTimeout(() => {
+                        this.currentPage = 1;
+                        this.hasMore = true;
+                        this.fetchPage(1, true);
+                    }, 300);
                 },
 
                 playTrack(track) {
@@ -509,9 +610,11 @@
                 },
 
                 refreshPage() {
-                    window.location.reload();
+                    this.currentPage = 1;
+                    this.hasMore = true;
+                    this.fetchPage(1, true);
                 }
-            }
+            };
         }
     </script>
 </body>
