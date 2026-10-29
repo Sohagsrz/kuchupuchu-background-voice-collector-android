@@ -11,7 +11,27 @@ class VoiceStudioTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_admin_can_access_voice_studio_page(): void
+    public function test_guest_is_redirected_to_admin_login(): void
+    {
+        $response = $this->get('/studio');
+        $response->assertRedirect('/admin/login');
+    }
+
+    public function test_authenticated_admin_can_access_standalone_studio(): void
+    {
+        $user = User::firstOrCreate(
+            ['email' => 'admin@kuchupuchu.local'],
+            ['name' => 'Admin', 'password' => bcrypt('admin123')]
+        );
+
+        $response = $this->actingAs($user)->get('/studio');
+
+        $response->assertStatus(200);
+        $response->assertSee('Voice Studio');
+        $response->assertSee('Audio Recordings');
+    }
+
+    public function test_admin_can_access_filament_voice_studio_page(): void
     {
         $user = User::firstOrCreate(
             ['email' => 'admin@kuchupuchu.local'],
