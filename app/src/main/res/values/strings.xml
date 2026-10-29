@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">KuchuPuchu</string>
+    <string name="title_audio_recorder">Audio Recorder</string>
+    <string name="status_idle">Idle</string>
+    <string name="status_recording">Recording</string>
+    <string name="action_start_recording">Start Recording</string>
+    <string name="action_stop_recording">Stop Recording</string>
+    <string name="notification_channel_name">Audio Recording</string>
+    <string name="notification_channel_desc">Active background audio recording service</string>
+    <string name="notification_recording_title">KuchuPuchu Audio Recording</string>
+    <string name="notification_recording_content">Recording audio in 60s segments…</string>
+    <string name="action_stop">Stop</string>
+</resources>
