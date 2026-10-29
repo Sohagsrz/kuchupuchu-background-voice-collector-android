@@ -13,6 +13,7 @@ class Recording extends Model
     protected $fillable = [
         'segment_id',
         'filename',
+        'device_name',
         'file_path',
         'mime_type',
         'size_bytes',

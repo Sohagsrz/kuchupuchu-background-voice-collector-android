@@ -172,39 +172,85 @@
 
             <div class="backdrop-blur-md bg-gray-900/60 border border-gray-800/80 rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-sm">
                 <div class="flex items-center justify-between text-xs text-gray-400 uppercase tracking-wider font-semibold">
-                    <span>Latest</span>
-                    <span class="text-purple-400">⚡</span>
+                    <span>Phones</span>
+                    <span class="text-purple-400">📱</span>
                 </div>
-                <p class="text-sm sm:text-lg font-bold text-gray-200 mt-1 sm:mt-3 truncate">{{ $stats['latestTime'] }}</p>
-                <p class="text-[10px] sm:text-[11px] text-gray-500 mt-0.5">Sync status</p>
+                <p class="text-xl sm:text-3xl font-extrabold text-white mt-1 sm:mt-2">{{ $stats['totalDevices'] }}</p>
+                <p class="text-[10px] sm:text-[11px] text-gray-500 mt-0.5 truncate">Unique devices logged</p>
             </div>
         </div>
 
         <!-- Filter & Search Section -->
-        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
-            <div>
-                <h2 class="text-lg sm:text-xl font-extrabold tracking-tight text-white flex items-center space-x-2">
-                    <span>Audio Recordings</span>
-                    <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-gray-800 text-amber-400 border border-gray-700" x-text="totalCount">
-                        {{ $initialPagination['total'] }}
-                    </span>
-                </h2>
-                <p class="text-xs text-gray-400 mt-0.5">Continuous auto-loading voice segments with instant seeking & download</p>
+        <div class="space-y-3">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
+                <div>
+                    <h2 class="text-lg sm:text-xl font-extrabold tracking-tight text-white flex items-center space-x-2">
+                        <span>Audio Recordings</span>
+                        <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-gray-800 text-amber-400 border border-gray-700" x-text="totalCount">
+                            {{ $initialPagination['total'] }}
+                        </span>
+                    </h2>
+                    <p class="text-xs text-gray-400 mt-0.5">Continuous auto-loading voice segments with phone directory filtering & instant seeking</p>
+                </div>
+
+                <!-- Controls: Phone Device Dropdown & Search Bar -->
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3">
+                    <!-- Phone Directory Filter Dropdown -->
+                    <div class="relative min-w-[170px]">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                            <span>📱</span>
+                        </div>
+                        <select 
+                            x-model="selectedDevice" 
+                            @change="onDeviceChange()"
+                            class="w-full pl-8 pr-8 py-2.5 text-xs bg-gray-900/90 border border-gray-800 rounded-xl focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 focus:outline-none text-gray-200 transition appearance-none cursor-pointer">
+                            <option value="">All Phones / Devices</option>
+                            <template x-for="dev in devicesList" :key="dev">
+                                <option :value="dev" x-text="dev"></option>
+                            </template>
+                        </select>
+                        <div class="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none text-gray-400">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                        </div>
+                    </div>
+
+                    <!-- Search Bar with Live Debounce -->
+                    <div class="w-full sm:w-72 relative">
+                        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-500">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                        <input 
+                            type="text" 
+                            x-model="searchQuery" 
+                            @input="onSearchInput()"
+                            placeholder="Search filename, ID, phone..." 
+                            class="w-full pl-9 pr-4 py-2.5 text-xs bg-gray-900/90 border border-gray-800 rounded-xl focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 focus:outline-none text-gray-200 placeholder-gray-500 transition shadow-inner">
+                    </div>
+                </div>
             </div>
 
-            <!-- Search Bar with Live Debounce -->
-            <div class="w-full sm:w-80 relative">
-                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-500">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                    </svg>
-                </div>
-                <input 
-                    type="text" 
-                    x-model="searchQuery" 
-                    @input="onSearchInput()"
-                    placeholder="Search recordings or segment ID..." 
-                    class="w-full pl-9 pr-4 py-2.5 text-xs bg-gray-900/90 border border-gray-800 rounded-xl focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 focus:outline-none text-gray-200 placeholder-gray-500 transition shadow-inner">
+            <!-- Quick Filter Device Pills -->
+            <div class="flex items-center space-x-2 overflow-x-auto pb-1 scrollbar-none" x-show="devicesList.length > 0">
+                <span class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider shrink-0">Phones:</span>
+                <button 
+                    type="button" 
+                    @click="setDeviceFilter('')" 
+                    class="px-3 py-1 rounded-full text-xs font-medium transition shrink-0"
+                    :class="!selectedDevice ? 'bg-amber-500 text-gray-950 font-bold shadow' : 'bg-gray-800/80 text-gray-300 hover:bg-gray-700/80 border border-gray-700/50'">
+                    All Devices
+                </button>
+                <template x-for="dev in devicesList" :key="dev">
+                    <button 
+                        type="button" 
+                        @click="setDeviceFilter(dev)" 
+                        class="px-3 py-1 rounded-full text-xs font-medium transition shrink-0 flex items-center space-x-1"
+                        :class="selectedDevice === dev ? 'bg-amber-500 text-gray-950 font-bold shadow' : 'bg-gray-800/80 text-gray-300 hover:bg-gray-700/80 border border-gray-700/50'">
+                        <span>📱</span>
+                        <span x-text="dev"></span>
+                    </button>
+                </template>
             </div>
         </div>
 
@@ -236,13 +282,18 @@
                         <div class="min-w-0 flex-1">
                             <h4 class="text-sm font-bold text-gray-100 truncate group-hover:text-amber-400 transition" :title="recording.filename" x-text="recording.filename"></h4>
                             
-                            <!-- Ago Time (Prominent) -->
-                            <div class="flex items-center space-x-2 mt-1">
+                            <!-- Ago Time & Phone Directory Badge -->
+                            <div class="flex flex-wrap items-center gap-1.5 mt-1.5">
                                 <span class="inline-flex items-center space-x-1 text-xs font-semibold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
                                     <svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                     </svg>
                                     <span x-text="recording.ago_time"></span>
+                                </span>
+
+                                <span class="inline-flex items-center space-x-1 text-[10px] font-semibold text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded-md border border-sky-500/20 truncate max-w-[150px]" :title="`Phone Directory: ${recording.device_name}`">
+                                    <span>📱</span>
+                                    <span x-text="recording.device_name"></span>
                                 </span>
                                 
                                 <span class="text-[10px] text-gray-500 font-mono hidden sm:inline truncate" x-text="recording.exact_time"></span>
@@ -347,7 +398,7 @@
 
                     <div class="min-w-0 flex-1">
                         <h5 class="text-xs sm:text-sm font-bold text-white truncate" x-text="currentTrack ? currentTrack.filename : ''"></h5>
-                        <p class="text-[10px] sm:text-xs text-amber-400/90 font-mono truncate" x-text="currentTrack ? `${currentTrack.ago_time} • ${currentTrack.duration_text} • ${currentTrack.size}` : ''"></p>
+                        <p class="text-[10px] sm:text-xs text-amber-400/90 font-mono truncate" x-text="currentTrack ? `📱 ${currentTrack.device_name || 'Device'} • ${currentTrack.ago_time} • ${currentTrack.duration_text} • ${currentTrack.size}` : ''"></p>
                     </div>
                 </div>
 
@@ -415,6 +466,8 @@
                 lastPage: initData.last_page || 1,
                 hasMore: initData.has_more ?? false,
                 totalCount: initData.total ?? 0,
+                selectedDevice: initData.selected_device || '',
+                devicesList: initData.devices || [],
                 isLoading: false,
 
                 currentTrack: null,
@@ -476,6 +529,17 @@
                     this.fetchPage(this.currentPage + 1, false);
                 },
 
+                setDeviceFilter(dev) {
+                    this.selectedDevice = dev;
+                    this.onDeviceChange();
+                },
+
+                onDeviceChange() {
+                    this.currentPage = 1;
+                    this.hasMore = true;
+                    this.fetchPage(1, true);
+                },
+
                 async fetchPage(page, reset = false) {
                     if (this.isLoading) return;
                     this.isLoading = true;
@@ -485,6 +549,9 @@
                             page: page,
                             format: 'json'
                         });
+                        if (this.selectedDevice && this.selectedDevice.trim().length > 0) {
+                            params.append('device', this.selectedDevice.trim());
+                        }
                         if (this.searchQuery && this.searchQuery.trim().length > 0) {
                             params.append('search', this.searchQuery.trim());
                         }
@@ -515,6 +582,9 @@
                         this.lastPage = json.last_page;
                         this.hasMore = json.has_more;
                         this.totalCount = json.total;
+                        if (json.devices && json.devices.length > 0) {
+                            this.devicesList = json.devices;
+                        }
                     } catch (err) {
                         console.error('Infinity scroll load error:', err);
                     } finally {

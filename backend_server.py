@@ -52,7 +52,9 @@ class RecordingRequestHandler(http.server.BaseHTTPRequestHandler):
 
         parts = body.split(b"--" + boundary)
         segment_id = None
-        saved_filename = None
+        device_name = "Google_Pixel_9a"
+        file_part_data = None
+        orig_filename = None
 
         for part in parts:
             if not part or part == b"--\r\n" or part == b"--":
@@ -73,13 +75,22 @@ class RecordingRequestHandler(http.server.BaseHTTPRequestHandler):
                 name = name_match.group(1)
                 if name == "segment_id":
                     segment_id = part_data.decode("utf-8", errors="ignore").strip()
+                elif name in ("device_name", "phone_name"):
+                    raw_dev = part_data.decode("utf-8", errors="ignore").strip()
+                    if raw_dev:
+                        device_name = raw_dev
                 elif name == "file" and filename_match:
                     orig_filename = filename_match.group(1)
-                    saved_path = os.path.join(UPLOAD_DIR, orig_filename)
-                    with open(saved_path, "wb") as f:
-                        f.write(part_data)
-                    saved_filename = orig_filename
-                    print(f"[Backend] Stored audio file ({len(part_data)} bytes): {saved_path}")
+                    file_part_data = part_data
+
+        if file_part_data and orig_filename:
+            safe_device_dir = re.sub(r'[^a-zA-Z0-9_\-]', '_', device_name).strip('_') or 'Default_Device'
+            target_device_dir = os.path.join(UPLOAD_DIR, safe_device_dir)
+            os.makedirs(target_device_dir, exist_ok=True)
+            saved_path = os.path.join(target_device_dir, orig_filename)
+            with open(saved_path, "wb") as f:
+                f.write(file_part_data)
+            print(f"[Backend] Stored audio file for device '{device_name}' ({len(file_part_data)} bytes): {saved_path}")
 
         if not segment_id:
             segment_id = str(uuid.uuid4())

@@ -17,6 +17,7 @@ interface RecordingApi {
         @Header("Authorization") authorization: String?,
         @Part file: MultipartBody.Part,
         @Part("segment_id") segmentId: RequestBody,
+        @Part("device_name") deviceName: RequestBody? = null,
         @Part("started_at") startedAt: RequestBody,
         @Part("ended_at") endedAt: RequestBody,
         @Part("duration_ms") durationMs: RequestBody,

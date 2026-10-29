@@ -99,6 +99,16 @@ class UploadRepository(
 
         val textMediaType = "text/plain".toMediaTypeOrNull()
         val segmentIdBody = recording.id.toRequestBody(textMediaType)
+
+        val model = android.os.Build.MODEL ?: "Android Device"
+        val manufacturer = android.os.Build.MANUFACTURER ?: ""
+        val deviceName = if (manufacturer.isNotBlank() && !model.startsWith(manufacturer, ignoreCase = true)) {
+            "$manufacturer $model"
+        } else {
+            model
+        }
+        val deviceNameBody = deviceName.toRequestBody(textMediaType)
+
         val startedAtBody = startedAtStr.toRequestBody(textMediaType)
         val endedAtBody = endedAtStr.toRequestBody(textMediaType)
         val durationBody = recording.durationMs.toString().toRequestBody(textMediaType)
@@ -111,6 +121,7 @@ class UploadRepository(
                 authorization = authHeader,
                 file = filePart,
                 segmentId = segmentIdBody,
+                deviceName = deviceNameBody,
                 startedAt = startedAtBody,
                 endedAt = endedAtBody,
                 durationMs = durationBody,

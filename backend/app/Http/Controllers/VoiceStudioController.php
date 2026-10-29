@@ -14,8 +14,14 @@ class VoiceStudioController extends Controller
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('filename', 'like', "%{$search}%")
-                  ->orWhere('segment_id', 'like', "%{$search}%");
+                  ->orWhere('segment_id', 'like', "%{$search}%")
+                  ->orWhere('device_name', 'like', "%{$search}%");
             });
+        }
+
+        $selectedDevice = $request->input('device') ?: $request->input('device_name');
+        if ($selectedDevice && $selectedDevice !== 'all') {
+            $query->where('device_name', $selectedDevice);
         }
 
         $perPage = (int) $request->input('per_page', 12);
@@ -29,6 +35,7 @@ class VoiceStudioController extends Controller
             return [
                 'id' => $recording->id,
                 'filename' => $recording->filename,
+                'device_name' => $recording->device_name ?: 'Google Pixel 9a',
                 'segment_id' => $recording->segment_id,
                 'duration_text' => $recording->formatted_duration,
                 'duration_seconds' => (int) ($recording->duration_ms / 1000),
@@ -42,6 +49,15 @@ class VoiceStudioController extends Controller
 
         $items = collect($paginator->items())->map($transformRecording)->values();
 
+        // Get distinct phone/device names for filter tabs
+        $devices = Recording::select('device_name')
+            ->whereNotNull('device_name')
+            ->where('device_name', '!=', '')
+            ->distinct()
+            ->orderBy('device_name')
+            ->pluck('device_name')
+            ->values();
+
         if ($request->wantsJson() || $request->ajax() || $request->input('format') === 'json') {
             return response()->json([
                 'data' => $items,
@@ -50,6 +66,8 @@ class VoiceStudioController extends Controller
                 'has_more' => $paginator->hasMorePages(),
                 'total' => $paginator->total(),
                 'per_page' => $paginator->perPage(),
+                'devices' => $devices,
+                'selected_device' => $selectedDevice,
             ]);
         }
 
@@ -75,6 +93,7 @@ class VoiceStudioController extends Controller
             'totalRecordings' => $totalRecordings,
             'totalDuration' => $formattedDuration,
             'totalSize' => $sizeFormatted,
+            'totalDevices' => $devices->count(),
             'latestTime' => $latest ? $latest->started_at?->diffForHumans() : 'No recordings yet',
         ];
 
@@ -85,8 +104,10 @@ class VoiceStudioController extends Controller
             'has_more' => $paginator->hasMorePages(),
             'total' => $paginator->total(),
             'per_page' => $paginator->perPage(),
+            'devices' => $devices,
+            'selected_device' => $selectedDevice,
         ];
 
-        return view('studio.index', compact('stats', 'search', 'initialPagination'));
+        return view('studio.index', compact('stats', 'search', 'initialPagination', 'devices', 'selectedDevice'));
     }
 }

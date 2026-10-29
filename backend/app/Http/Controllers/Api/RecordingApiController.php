@@ -26,6 +26,8 @@ class RecordingApiController extends Controller
         $request->validate([
             'file' => 'required|file',
             'segment_id' => 'required|string',
+            'device_name' => 'nullable|string',
+            'phone_name' => 'nullable|string',
             'started_at' => 'nullable|string',
             'ended_at' => 'nullable|string',
             'duration_ms' => 'nullable|numeric',
@@ -46,11 +48,22 @@ class RecordingApiController extends Controller
             ]);
         }
 
+        // Phone name / Device name resolution
+        $rawDeviceName = $request->input('device_name') 
+            ?: $request->input('phone_name') 
+            ?: 'Google Pixel 9a';
+        $deviceName = trim($rawDeviceName);
+
+        // Sanitize phone name for clean filesystem directory name (e.g. "Google Pixel 9a" -> "Google_Pixel_9a")
+        $safeDirName = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $deviceName);
+        $safeDirName = trim(preg_replace('/_+/', '_', $safeDirName), '_') ?: 'Default_Device';
+        $phoneDirectory = "recordings/{$safeDirName}";
+
         $file = $request->file('file');
         $filename = $file->getClientOriginalName() ?: ("audio_" . time() . "_{$segmentId}.m4a");
 
-        // Save file to public disk under recordings directory
-        $storedPath = $file->storeAs('recordings', $filename, 'public');
+        // Save file to public disk under recordings/{phone_name} directory
+        $storedPath = $file->storeAs($phoneDirectory, $filename, 'public');
 
         // Checksum verification
         $actualSha256 = hash_file('sha256', Storage::disk('public')->path($storedPath));
@@ -63,6 +76,7 @@ class RecordingApiController extends Controller
         $recording = Recording::create([
             'segment_id' => $segmentId,
             'filename' => $filename,
+            'device_name' => $deviceName,
             'file_path' => $storedPath,
             'mime_type' => $file->getClientMimeType() ?: 'audio/mp4',
             'size_bytes' => $file->getSize(),

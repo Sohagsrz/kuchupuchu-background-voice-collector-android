@@ -69,20 +69,23 @@ The backend is built with **Laravel** and features a **Filament v3 Admin Panel**
    - `POST /api/v1/recordings`: Accepts `multipart/form-data` uploads:
      - `file`: The `.m4a` AAC audio file
      - `segment_id`: Unique segment UUID (used as idempotency key)
+     - `device_name`: Phone name / model (e.g. `Google Pixel 9a`, `Samsung Galaxy S24`) to organize files into phone-specific directories (`recordings/{device_name}/...`)
      - `started_at`: UTC ISO-8601 recording start time
      - `ended_at`: UTC ISO-8601 recording end time
      - `duration_ms`: Duration in milliseconds
      - `checksum`: SHA-256 hash for integrity validation
 2. **Filament Admin Panel & Voice Player Studio**:
-   - **URL**: `http://localhost:8000/admin`
+   - **URL**: `http://localhost:8000/admin` (Filament) or `http://localhost:8000/studio` (Standalone Mobile-Friendly Studio)
    - **Default Admin Account**:
      - **Email**: `admin@kuchupuchu.local`
      - **Password**: `admin123`
-   - **Dedicated Voice Player Studio (`/admin/voice-studio`)**:
-     - High-end master audio player bar with scrub seekbar, skip +/- 10s, volume, and 0.75x–2.0x playback speed.
+   - **Dedicated Voice Player Studio (`/studio` and `/admin/voice-studio`)**:
+     - **Phone Directory Filtering**: Filter recordings by specific phone models or view all devices at once.
+     - **Infinite Scroll**: Continuous smooth loading as you scroll, without interrupting audio playback.
+     - High-end master audio player bar with touch-friendly scrub seekbar, skip +/- 10s, volume, and 0.75x–2.0x playback speed.
      - Live soundwave equalizer animations for the actively playing recording.
-     - Key statistics: Total recordings, total recorded duration, disk space consumed, and latest activity.
-     - Interactive recording cards with instant one-click playback, metadata tags, and direct file downloads.
+     - Key statistics: Total recordings, total recorded duration, storage space, and total connected phones.
+     - Interactive recording cards with instant one-click playback, phone badge, relative "ago" timestamps, and direct file downloads.
      - Real-time client-side search across filenames and segment UUIDs.
    - **Voice Recordings Resource (`/admin/recordings`)**:
      - Embedded audio player column in the data table.

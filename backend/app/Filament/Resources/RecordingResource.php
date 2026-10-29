@@ -33,6 +33,9 @@ class RecordingResource extends Resource
                     ->label('Segment ID')
                     ->disabled()
                     ->required(),
+                Forms\Components\TextInput::make('device_name')
+                    ->label('Phone / Device')
+                    ->disabled(),
                 Forms\Components\TextInput::make('filename')
                     ->label('Filename')
                     ->disabled(),
@@ -76,8 +79,16 @@ class RecordingResource extends Resource
                 Tables\Columns\TextColumn::make('filename')
                     ->label('Filename')
                     ->searchable()
-                    ->limit(28)
+                    ->limit(24)
                     ->tooltip(fn (Recording $record): string => $record->filename),
+
+                Tables\Columns\TextColumn::make('device_name')
+                    ->label('Phone / Device')
+                    ->icon('heroicon-m-device-phone-mobile')
+                    ->badge()
+                    ->color('warning')
+                    ->searchable()
+                    ->sortable(),
 
                 Tables\Columns\TextColumn::make('duration_ms')
                     ->label('Duration')
@@ -110,6 +121,9 @@ class RecordingResource extends Resource
                     }),
             ])
             ->filters([
+                Tables\Filters\SelectFilter::make('device_name')
+                    ->label('Phone / Device')
+                    ->options(fn () => Recording::whereNotNull('device_name')->distinct()->pluck('device_name', 'device_name')->toArray()),
                 Tables\Filters\SelectFilter::make('status')
                     ->options([
                         'UPLOADED' => 'Uploaded',
@@ -153,6 +167,10 @@ class RecordingResource extends Resource
                         Infolists\Components\TextEntry::make('segment_id')
                             ->label('Segment UUID')
                             ->copyable(),
+                        Infolists\Components\TextEntry::make('device_name')
+                            ->label('Phone / Device')
+                            ->badge()
+                            ->color('warning'),
                         Infolists\Components\TextEntry::make('filename')
                             ->label('Stored Filename'),
                         Infolists\Components\TextEntry::make('formatted_duration')

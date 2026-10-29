@@ -300,6 +300,10 @@
                                     <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-400">
                                         {{ $recording->status }}
                                     </span>
+                                    <span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-400">
+                                        <span>📱</span>
+                                        <span>{{ $recording->device_name ?: 'Google Pixel 9a' }}</span>
+                                    </span>
                                 </div>
 
                                 <div class="flex flex-wrap items-center text-xs text-gray-500 dark:text-gray-400 gap-x-4 gap-y-1 mt-1 font-mono">

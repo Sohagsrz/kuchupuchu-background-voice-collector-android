@@ -117,4 +117,42 @@ class VoiceStudioTest extends TestCase
         $this->assertCount(1, $response->json('data'));
         $this->assertEquals('special_secret_recording.m4a', $response->json('data.0.filename'));
     }
+
+    public function test_studio_filters_by_phone_device(): void
+    {
+        $user = User::firstOrCreate(
+            ['email' => 'admin@kuchupuchu.local'],
+            ['name' => 'Admin', 'password' => bcrypt('admin123')]
+        );
+
+        Recording::create([
+            'segment_id' => 'pixel-seg-1',
+            'filename' => 'pixel_audio_1.m4a',
+            'device_name' => 'Google Pixel 9a',
+            'file_path' => 'recordings/Google_Pixel_9a/pixel_1.m4a',
+            'started_at' => now(),
+            'duration_ms' => 60000,
+            'size_bytes' => 180000,
+            'status' => 'UPLOADED',
+        ]);
+
+        Recording::create([
+            'segment_id' => 'samsung-seg-1',
+            'filename' => 'samsung_audio_1.m4a',
+            'device_name' => 'Samsung Galaxy S24',
+            'file_path' => 'recordings/Samsung_Galaxy_S24/samsung_1.m4a',
+            'started_at' => now(),
+            'duration_ms' => 60000,
+            'size_bytes' => 180000,
+            'status' => 'UPLOADED',
+        ]);
+
+        $response = $this->actingAs($user)->getJson('/studio?format=json&device=Samsung+Galaxy+S24');
+        $response->assertStatus(200);
+        $response->assertJsonPath('total', 1);
+        $this->assertEquals('samsung_audio_1.m4a', $response->json('data.0.filename'));
+        $this->assertEquals('Samsung Galaxy S24', $response->json('data.0.device_name'));
+        $this->assertContains('Samsung Galaxy S24', $response->json('devices'));
+        $this->assertContains('Google Pixel 9a', $response->json('devices'));
+    }
 }

@@ -63,4 +63,30 @@ class RecordingApiTest extends TestCase
 
         $this->assertEquals(1, Recording::where('segment_id', 'test-segment-uuid-999')->count());
     }
+
+    public function test_upload_recording_creates_phone_name_directory(): void
+    {
+        Storage::fake('public');
+
+        $file = UploadedFile::fake()->create('custom_device_audio.m4a', 64, 'audio/mp4');
+
+        $payload = [
+            'file' => $file,
+            'segment_id' => 'seg-phone-test-101',
+            'device_name' => 'Samsung Galaxy S24 Ultra',
+            'started_at' => '2026-10-29T14:10:00Z',
+            'ended_at' => '2026-10-29T14:11:00Z',
+            'duration_ms' => 60000,
+        ];
+
+        $response = $this->postJson('/api/v1/recordings', $payload);
+        $response->assertStatus(200);
+
+        $recording = Recording::where('segment_id', 'seg-phone-test-101')->first();
+        $this->assertNotNull($recording);
+        $this->assertEquals('Samsung Galaxy S24 Ultra', $recording->device_name);
+        $this->assertStringStartsWith('recordings/Samsung_Galaxy_S24_Ultra/', $recording->file_path);
+
+        Storage::disk('public')->assertExists($recording->file_path);
+    }
 }
