@@ -18,8 +18,15 @@ open class SettingsRepository(
     open val settings: StateFlow<AppSettings> get() = _settings.asStateFlow()
 
     private fun loadSettings(): AppSettings {
+        val storedUrl = prefs.getString(KEY_BASE_URL, null)
+        val resolvedUrl = if (storedUrl.isNullOrBlank() || storedUrl == "http://10.0.2.2:8080/" || storedUrl == "http://10.0.2.2:8000/") {
+            DEFAULT_BASE_URL
+        } else {
+            storedUrl
+        }
+
         return AppSettings(
-            serverBaseUrl = prefs.getString(KEY_BASE_URL, "http://10.0.2.2:8080/") ?: "http://10.0.2.2:8080/",
+            serverBaseUrl = resolvedUrl,
             apiToken = tokenStorage.apiToken,
             segmentDurationSeconds = prefs.getInt(KEY_SEGMENT_DURATION, 60).coerceIn(10, 600),
             audioBitrateKbps = prefs.getInt(KEY_BITRATE, 24).coerceIn(16, 128),
@@ -29,7 +36,13 @@ open class SettingsRepository(
     }
 
     fun updateServerBaseUrl(url: String) {
-        val sanitized = if (!url.endsWith("/")) "$url/" else url
+        val trimmed = url.trim()
+        val withScheme = if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
+            "https://$trimmed"
+        } else {
+            trimmed
+        }
+        val sanitized = if (!withScheme.endsWith("/")) "$withScheme/" else withScheme
         prefs.edit().putString(KEY_BASE_URL, sanitized).apply()
         _settings.value = _settings.value.copy(serverBaseUrl = sanitized)
     }
@@ -77,6 +90,7 @@ open class SettingsRepository(
     }
 
     companion object {
+        const val DEFAULT_BASE_URL = "https://kuchupuchu.pricehatbd.com/"
         private const val PREFS_NAME = "kuchupuchu_app_settings"
         private const val KEY_BASE_URL = "key_base_url"
         private const val KEY_SEGMENT_DURATION = "key_segment_duration"

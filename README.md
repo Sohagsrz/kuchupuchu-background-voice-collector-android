@@ -133,9 +133,10 @@ adb shell am start -n com.kuchupuchu.audiorecorder/.ui.MainActivity
 
 Inside the app, tap the **Settings** icon in the top right to configure:
 - **Server Base URL**:
-  - Laravel backend (port 8000): `http://10.0.2.2:8000/`
-  - Python mock backend (port 8080): `http://10.0.2.2:8080/`
-  *(Both share the identical REST API endpoints `/api/v1/health` and `/api/v1/recordings`)*
+  - Default Production Cloud: `https://kuchupuchu.pricehatbd.com/`
+  - Local Laravel backend (port 8000 on emulator): `http://10.0.2.2:8000/`
+  - Local Python mock backend (port 8080 on emulator): `http://10.0.2.2:8080/`
+  *(All share the identical REST API endpoints `/api/v1/health` and `/api/v1/recordings`)*
 - **Device Auth Token**: Optional Bearer token for protected backend endpoints.
 - **Test Connection**: Pings `/api/v1/health` and displays immediate status feedback.
 - **Segment Duration**: Select 30s, 60s, 120s, or 300s.

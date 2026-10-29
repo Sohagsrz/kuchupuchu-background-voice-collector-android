@@ -1,7 +1,7 @@
 package com.kuchupuchu.audiorecorder.settings
 
 data class AppSettings(
-    val serverBaseUrl: String = "http://10.0.2.2:8080/",
+    val serverBaseUrl: String = "https://kuchupuchu.pricehatbd.com/",
     val apiToken: String = "",
     val segmentDurationSeconds: Int = 60,
     val audioBitrateKbps: Int = 24,

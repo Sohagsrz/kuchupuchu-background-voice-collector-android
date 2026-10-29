@@ -120,7 +120,7 @@ fun SettingsScreen(
                             value = settings.serverBaseUrl,
                             onValueChange = { viewModel.updateServerBaseUrl(it) },
                             label = { Text("Server Base URL") },
-                            placeholder = { Text("http://10.0.2.2:8080/") },
+                            placeholder = { Text("https://kuchupuchu.pricehatbd.com/") },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri)
